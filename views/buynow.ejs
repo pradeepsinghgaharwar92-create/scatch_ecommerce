@@ -1,0 +1,225 @@
+<%- include('./partials/header') %>
+
+<div class="min-h-screen bg-gradient-to-br from-[#F4F1EE] to-[#E7DDD5] py-10 px-6">
+
+    <div class="max-w-7xl mx-auto">
+
+        <
+        <a href="/product/<%= product._id %>"
+            class="inline-flex items-center gap-2 text-[#5A0000] font-semibold mb-6">
+
+            ← Back to Product
+
+        </a>
+
+        <div class="grid lg:grid-cols-3 gap-8">
+
+            
+            <div class="lg:col-span-2 space-y-6">
+
+                
+                <div class="bg-white rounded-3xl shadow-xl p-6">
+
+                    <h2 class="text-2xl font-bold mb-5">
+                        Order Details
+                    </h2>
+
+                    <div class="flex gap-5 items-center">
+
+                        <img
+                            class="h-28 w-28 object-contain bg-gray-100 rounded-2xl p-2"
+                            src="data:image/jpeg;base64,<%= product.Image.toString('base64') %>"
+                            alt=""
+                        >
+
+                        <div>
+
+                            <h3 class="text-xl font-bold">
+                                <%= product.name %>
+                            </h3>
+
+                            <p class="text-gray-500 mt-1">
+                                Premium Collection
+                            </p>
+
+                            <div class="flex items-center gap-3 mt-3">
+
+                                <span class="text-2xl font-bold text-[#5A0000]">
+                                    ₹ <%= product.price %>
+                                </span>
+
+                                <span class="line-through text-gray-400">
+                                    ₹ <%= Math.floor(product.price * 1.3) %>
+                                </span>
+
+                                <span class="text-green-600 font-semibold">
+                                    30% OFF
+                                </span>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                
+                <div class="bg-white rounded-3xl shadow-xl p-6">
+
+                    <h2 class="text-2xl font-bold mb-5">
+                        Delivery Address
+                    </h2>
+
+                    <div class="grid md:grid-cols-2 gap-4">
+
+                        <input
+                            class="border rounded-xl p-4 outline-none"
+                            type="text"
+                            placeholder="Full Name">
+
+                        <input
+                            class="border rounded-xl p-4 outline-none"
+                            type="text"
+                            placeholder="Mobile Number">
+
+                        <input
+                            class="border rounded-xl p-4 outline-none md:col-span-2"
+                            type="text"
+                            placeholder="Address">
+
+                        <input
+                            class="border rounded-xl p-4 outline-none"
+                            type="text"
+                            placeholder="City">
+
+                        <input
+                            class="border rounded-xl p-4 outline-none"
+                            type="text"
+                            placeholder="Pincode">
+
+                    </div>
+
+                </div>
+
+                
+                <div class="bg-white rounded-3xl shadow-xl p-6">
+
+                    <h2 class="text-2xl font-bold mb-5">
+                        Payment Method
+                    </h2>
+
+                    <div class="space-y-4">
+
+                        <label
+                            class="flex items-center justify-between border rounded-2xl p-4 cursor-pointer hover:border-[#5A0000]">
+
+                            <div class="flex items-center gap-3">
+                                <input type="radio" name="payment" checked>
+                                <span>Cash on Delivery</span>
+                            </div>
+
+                            <span>💵</span>
+
+                        </label>
+
+                        <label
+                            class="flex items-center justify-between border rounded-2xl p-4 cursor-pointer hover:border-[#5A0000]">
+
+                            <div class="flex items-center gap-3">
+                                <input type="radio" name="payment">
+                                <span>UPI Payment</span>
+                            </div>
+
+                            <span>📱</span>
+
+                        </label>
+
+                        <label
+                            class="flex items-center justify-between border rounded-2xl p-4 cursor-pointer hover:border-[#5A0000]">
+
+                            <div class="flex items-center gap-3">
+                                <input type="radio" name="payment">
+                                <span>Credit / Debit Card</span>
+                            </div>
+
+                            <span>💳</span>
+
+                        </label>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            
+            <div>
+
+                <div class="bg-white rounded-3xl shadow-2xl p-6 sticky top-6">
+
+                    <h2 class="text-2xl font-bold mb-6">
+                        Order Summary
+                    </h2>
+
+                    <div class="space-y-4">
+
+                        <div class="flex justify-between">
+                            <span>Product Price</span>
+                            <span>₹ <%= product.price %></span>
+                        </div>
+
+                        <div class="flex justify-between">
+                            <span>Discount</span>
+                            <span class="text-green-600">
+                                - ₹ <%= Math.floor(product.price*0.3) %>
+                            </span>
+                        </div>
+
+                        <div class="flex justify-between">
+                            <span>Delivery</span>
+                            <span class="text-green-600">
+                                FREE
+                            </span>
+                        </div>
+
+                        <hr>
+
+                        <div
+                            class="flex justify-between text-xl font-bold">
+
+                            <span>Total</span>
+
+                            <span class="text-[#5A0000]">
+                                ₹ <%= Math.floor(product.price*0.7) %>
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                    <button
+                        class="w-full mt-8 bg-[#5A0000] text-white py-4 rounded-2xl font-bold text-lg hover:bg-[#750000] transition">
+
+                        Place Order
+
+                    </button>
+
+                    <p
+                        class="text-center text-gray-500 text-sm mt-4">
+
+                        🔒 100% Secure Checkout
+
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<%- include('./partials/footer') %>
