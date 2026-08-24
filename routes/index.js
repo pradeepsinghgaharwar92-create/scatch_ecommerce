@@ -1,180 +1,245 @@
-const express=require("express");
-const router=express.Router();
+const express = require("express");
+const router = express.Router();
 const isLoggedin = require("../middlewares/isLoggedin");
-const productModel=require("../models/product-model");
+const productModel = require("../models/product-model");
 const userModels = require("../models/user-models");
 
-router.get("/",function(req,res){
-    let error=req.flash("error")
-    res.render("index",{error,
-        isLoggedin: false
-    });
-});
-router.get("/search",isLoggedin,async function(req,res){
-    let query = req.query.query
-      let products = await productModel.find({
-        name: { $regex: query, $options: "i" }  // regex ka mtlv jo hamne search kiya usse related jo bhi ho dedo
-    });
+const formatProduct = (product) => {
+    if (!product) return null;
+    const productObj = product.toObject ? product.toObject() : product;
+    if (productObj.Image && Buffer.isBuffer(productObj.Image)) {
+        productObj.Image = `data:image/jpeg;base64,${productObj.Image.toString("base64")}`;
+    }
+    return productObj;
+};
 
-    res.render("shop", {
-        products,
-        success: [],
-        isLoggedin: true
-    });
-})
-
-
-router.get("/shop",isLoggedin,async function(req,res){
-    console.log("SHOP ROUTE HIT");
-   
-    let products = await productModel.find();
-     
-    res.render("shop", { products,success:req.flash("success"),isLoggedin: true });
+router.get("/", function(req, res){
+    return res.status(200).json({ message: "Scatch API is active" });
 });
 
-// yaha hamne cart vala route banaya 
-router.get("/cart", isLoggedin, async function(req,res){
+router.get("/search", isLoggedin, async function(req, res){
+    try {
+        let query = req.query.query || "";
+        let products = await productModel.find({
+            name: { $regex: query, $options: "i" }
+        });
+        const formatted = products.map(formatProduct);
+        return res.status(200).json(formatted);
+    } catch (err) {
+        return res.status(500).json({ success: false, message: err.message });
+    }
+});
 
-    let user = await userModels
-        .findOne({email:req.user.email})
-        .populate("cart.product");
-        
+router.get("/shop", isLoggedin, async function(req, res){
+    try {
+        console.log("SHOP ROUTE HIT");
+        let products = await productModel.find();
+        const formatted = products.map(formatProduct);
+        return res.status(200).json(formatted);
+    } catch (err) {
+        return res.status(500).json({ success: false, message: err.message });
+    }
+});
+
+router.get("/cart", isLoggedin, async function(req, res){
+    try {
+        let user = await userModels
+            .findOne({ email: req.user.email })
+            .populate("cart.product");
+            
         let bill = 0;
+        let cartItems = [];
 
-    user.cart.forEach(item => {
-        bill += item.product.price * item.quantity;
-    });
-        
+        if (user && user.cart) {
+            cartItems = user.cart.map(item => {
+                if (item.product) {
+                    const formattedProd = formatProduct(item.product);
+                    bill += formattedProd.price * item.quantity;
+                    return {
+                        product: formattedProd,
+                        quantity: item.quantity,
+                        _id: item._id
+                    };
+                }
+                return null;
+            }).filter(item => item !== null);
+        }
 
-    res.render("cart",{
-        cartItems:user.cart,
-        bill,
-        isLoggedin: true,
-       
-    });
-
+        return res.status(200).json({
+            cartItems,
+            bill
+        });
+    } catch (err) {
+        return res.status(500).json({ success: false, message: err.message });
+    }
 });
 
 router.post("/product/:id/review", isLoggedin, async function(req, res){
+    try {
+        let product = await productModel.findById(req.params.id);
+        if (!product) {
+            return res.status(404).json({ success: false, message: "Product not found" });
+        }
 
-    let product = await productModel.findById(req.params.id);
-
-    let user = await userModels.findOne({
-        email: req.user.email
-    });
-
-    product.reviews.push({
-        user: user._id,
-        rating: req.body.rating,
-        comment: req.body.comment
-    });
-
-    await product.save();
-
-    res.redirect("/product/" + req.params.id);
-});
-
-router.get("/product/:id",isLoggedin,async function(req,res){
-       let product = await productModel
-        .findById(req.params.id)
-        .populate("reviews.user");
-    res.render("productdetails",{product,isLoggedin: true})
-
-})
-router.get("/buynow/:id",isLoggedin,async function(req,res){
-    let product = await productModel.findById(req.params.id);
-   res.render("buynow",{isLoggedin: true,product})
-});
-
-// yaha hamne product ko add kiya
-router.get("/addtocart/:productid", isLoggedin, async function(req,res){
-
-    let user = await userModels.findOne({
-        email: req.user.email
-    });
-
-    let existingItem = user.cart.find(
-        item => item.product.toString() === req.params.productid
-    );
-
-    if(existingItem){
-        existingItem.quantity += 1;
-    }else{
-        user.cart.push({
-            product: req.params.productid,
-            quantity: 1
+        let user = await userModels.findOne({
+            email: req.user.email
         });
+
+        product.reviews.push({
+            user: user._id,
+            rating: req.body.rating,
+            comment: req.body.comment
+        });
+
+        await product.save();
+        
+        // Return updated product details
+        const updatedProduct = await productModel.findById(req.params.id).populate("reviews.user");
+        return res.status(200).json({
+            success: true,
+            message: "Review added successfully",
+            product: formatProduct(updatedProduct)
+        });
+    } catch (err) {
+        return res.status(500).json({ success: false, message: err.message });
     }
-
-    await user.save();
-
-    req.flash("success","Added to cart");
-    res.redirect("/shop");
 });
-router.get("/clearcart", isLoggedin, async function(req,res){
 
-    let user = await userModels.findOne({
-        email:req.user.email
-    });
-
-    user.cart = [];
-
-    await user.save();
-
-    res.send("Cart Cleared");
-});
-// yaha hamne + vale ko working banaya
-router.get("/cart/increase/:id", isLoggedin, async function(req,res){
-
-    let user = await userModels.findOne({
-        email: req.user.email
-    });
-
-    let item = user.cart.find(
-        item => item.product.toString() === req.params.id
-    );
-
-    if(item){
-        item.quantity += 1;
+router.get("/product/:id", isLoggedin, async function(req, res){
+    try {
+        let product = await productModel
+            .findById(req.params.id)
+            .populate("reviews.user");
+        if (!product) {
+            return res.status(404).json({ success: false, message: "Product not found" });
+        }
+        return res.status(200).json(formatProduct(product));
+    } catch (err) {
+        return res.status(500).json({ success: false, message: err.message });
     }
-
-    await user.save();
-
-    res.redirect("/cart");
 });
-// yaha hamne - vale ko working banaya
-router.get("/cart/decrease/:id", isLoggedin, async function(req,res){
 
-    let user = await userModels.findOne({
-        email: req.user.email
-    });
-
-    let item = user.cart.find(
-        item => item.product.toString() === req.params.id
-    );
-
-    if(item && item.quantity > 1){
-        item.quantity -= 1;
+router.get("/buynow/:id", isLoggedin, async function(req, res){
+    try {
+        let product = await productModel.findById(req.params.id);
+        if (!product) {
+            return res.status(404).json({ success: false, message: "Product not found" });
+        }
+        return res.status(200).json(formatProduct(product));
+    } catch (err) {
+        return res.status(500).json({ success: false, message: err.message });
     }
-
-    await user.save();
-
-    res.redirect("/cart");
 });
 
+router.get("/addtocart/:productid", isLoggedin, async function(req, res){
+    try {
+        let user = await userModels.findOne({
+            email: req.user.email
+        });
 
-// yaha hamne profile banayi 
-router.get("/profile",isLoggedin,async function(req,res){
-   let user=await userModels.findOne({email:req.user.email})
-   res.render("profile",{user,isLoggedin: true})
+        let existingItem = user.cart.find(
+            item => item.product.toString() === req.params.productid
+        );
+
+        if (existingItem) {
+            existingItem.quantity += 1;
+        } else {
+            user.cart.push({
+                product: req.params.productid,
+                quantity: 1
+            });
+        }
+
+        await user.save();
+        return res.status(200).json({ success: true, message: "Added to cart", cartLength: user.cart.length });
+    } catch (err) {
+        return res.status(500).json({ success: false, message: err.message });
+    }
 });
 
-router.get("/logout", function(req,res){
+router.get("/clearcart", isLoggedin, async function(req, res){
+    try {
+        let user = await userModels.findOne({
+            email: req.user.email
+        });
+
+        user.cart = [];
+        await user.save();
+
+        return res.status(200).json({ success: true, message: "Cart Cleared" });
+    } catch (err) {
+        return res.status(500).json({ success: false, message: err.message });
+    }
+});
+
+router.get("/cart/increase/:id", isLoggedin, async function(req, res){
+    try {
+        let user = await userModels.findOne({
+            email: req.user.email
+        });
+
+        let item = user.cart.find(
+            item => item.product.toString() === req.params.id
+        );
+
+        if (item) {
+            item.quantity += 1;
+        }
+
+        await user.save();
+        return res.status(200).json({ success: true, message: "Quantity increased" });
+    } catch (err) {
+        return res.status(500).json({ success: false, message: err.message });
+    }
+});
+
+router.get("/cart/decrease/:id", isLoggedin, async function(req, res){
+    try {
+        let user = await userModels.findOne({
+            email: req.user.email
+        });
+
+        let item = user.cart.find(
+            item => item.product.toString() === req.params.id
+        );
+
+        if (item && item.quantity > 1) {
+            item.quantity -= 1;
+        }
+
+        await user.save();
+        return res.status(200).json({ success: true, message: "Quantity decreased" });
+    } catch (err) {
+        return res.status(500).json({ success: false, message: err.message });
+    }
+});
+
+router.get("/profile", isLoggedin, async function(req, res){
+    try {
+        let user = await userModels.findOne({ email: req.user.email });
+        if (!user) {
+            return res.status(404).json({ success: false, message: "User not found" });
+        }
+        return res.status(200).json({
+            success: true,
+            user: {
+                id: user._id,
+                fullname: user.fullname,
+                email: user.email,
+                contact: user.contact,
+                cartLength: user.cart.length,
+                ordersLength: user.orders?.length || 0,
+                isadmin: user.isadmin || false
+            }
+        });
+    } catch (err) {
+        return res.status(500).json({ success: false, message: err.message });
+    }
+});
+
+router.get("/logout", function(req, res){
     res.clearCookie("token");
-    req.flash("success", "Logged out successfully");
-    res.redirect("/");
+    return res.status(200).json({ success: true, message: "Logged out successfully" });
 });
 
-
-
-module.exports=router
+module.exports = router;

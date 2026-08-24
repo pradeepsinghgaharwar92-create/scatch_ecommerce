@@ -1,0 +1,43 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #5A0000;
+  --color-primary-hover: #730000;
+  --color-primary-light: #FFF5F5;
+  --color-luxury-linen: #F4EDE4;
+  --color-luxury-cream: #FAF6F0;
+  --color-luxury-gold: #C5A880;
+  --color-luxury-bronze: #8C7456;
+  --color-luxury-obsidian: #0F0F10;
+  --color-luxury-charcoal: #1A1A1C;
+  --font-sans: "Outfit", "Inter", sans-serif;
+  --animate-marquee: marquee 30s linear infinite;
+}
+
+@utility scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.card-3d {
+  perspective: 1000px;
+  transform-style: preserve-3d;
+  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.card-3d:hover {
+  transform: rotateY(10deg) rotateX(5deg);
+}
+
+/* Custom transitions and glassmorphism scrollbar */
+html {
+  scroll-behavior: smooth;
+}
+
+::selection {
+  background-color: #5A0000;
+  color: #FFFFFF;
+}
