@@ -13,7 +13,7 @@ const expressSession=require("express-session");
 app.use(cors({
      origin: [
        "http://localhost:5173",
-       "scatch-ecommerce.vercel.app"
+       "https://scatch-ecommerce.vercel.app"
     ],
     credentials: true
 }));
