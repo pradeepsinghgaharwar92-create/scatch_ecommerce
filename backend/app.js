@@ -1,5 +1,6 @@
 require("dotenv").config();
 const express = require("express")
+const cors = require("cors");
 
 const app = express()
 const PORT = process.env.PORT || 5000;
@@ -8,6 +9,14 @@ const cookieParser =require("cookie-parser");
 const path =require("path");
 const router=express.Router();
 const expressSession=require("express-session");
+
+app.use(cors({
+     origin: [
+       "http://localhost:5173",
+       "scatch-ecommerce.vercel.app"
+    ],
+    credentials: true
+}));
 
 
 const ownersRouters = require("./routes/ownersRouters")
