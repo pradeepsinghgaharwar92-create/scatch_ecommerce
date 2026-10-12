@@ -1,7 +1,7 @@
-const userModels = require("../models/user-models");
+const userModels = require("../../models/user-models");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt")
-const generateToken = require("../utils/generatetoken");
+const generateToken = require("../../utils/generatetoken");
 const shop = require("../routes/index")
 
 
@@ -50,6 +50,8 @@ module.exports.loginUser = async (req, res) => {
 
         res.cookie("token", token, {
             httpOnly: true,
+            secure: true,
+            sameSite: "none",
         });
 
         return res.status(200).json({
