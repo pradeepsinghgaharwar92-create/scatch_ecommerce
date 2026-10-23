@@ -1,7 +1,7 @@
 const userModels = require("../../models/user-models");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt")
-const generateToken = require("../../utils/generatetoken");
+const generateToken = require("../utils/generatetoken");
 const shop = require("../routes/index")
 
 
